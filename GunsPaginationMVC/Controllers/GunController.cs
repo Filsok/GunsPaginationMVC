@@ -1,151 +1,193 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using GunsPaginationMVC.Data;
+﻿using GunsPaginationMVC.Data;
 using GunsPaginationMVC.Models;
+using GunsPaginationMVC.Entities;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace GunsPaginationMVC.Controllers;
 
 public class GunsController : Controller
 {
-    private readonly GunsContext _context;
+	private readonly GunsContext _context;
+	private readonly int _rowsPerPage = 25;
 
-    public GunsController(GunsContext context)
-    {
-        _context = context;
-    }
+	public GunsController(GunsContext context)
+	{
+		_context = context;
+	}
 
-    #region GET
+	public async Task<IActionResult> Index()
+	{
+		return View(await GetGunList(1));
+	}
 
-    // GET: Guns
-    public async Task<IActionResult> Index()
-    {
-        return View(await _context.Gun.ToListAsync());
-    }
+	[HttpPost]
+	public async Task<IActionResult> Index(int currentPageIndex)
+	{
+		return View(await GetGunList(currentPageIndex));
+	}
 
-    // GET: Guns/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
+	[HttpPost]
+	public async Task<IActionResult> Filter(double filter)
+	{
+		return View(await GetGunListFiltered(1, filter));
+	}
 
-        var Gun = await _context.Gun
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (Gun == null)
-        {
-            return NotFound();
-        }
+	public async Task<GunsViewModel> GetGunListFiltered(int currentPageIndex, double filter)
+	{
+		var gunsModel = new GunsViewModel();
+		gunsModel.GunList = _context.Gun.ToList()
+			.Where(g => g.Cartridge == filter)
+			.OrderBy(g => g.Id)
+			.Skip((currentPageIndex - 1) * _rowsPerPage)
+			.Take(_rowsPerPage)
+			.ToList();
 
-        return View(Gun);
-    }
+		double pageCount = (double)((decimal)_context.Gun.Count() / Convert.ToDecimal(_rowsPerPage));
+		gunsModel.PageCount = (int)Math.Ceiling(pageCount);
+		gunsModel.CurrentPageIndex = currentPageIndex;
 
-    //// GET: Guns/Create
-    //public IActionResult Create()
-    //{
-    //    return View();
-    //}
+		return gunsModel;
+	}
 
-    #endregion GET
+	public async Task<GunsViewModel> GetGunList(int currentPageIndex)
+	{
+		var gunsModel = new GunsViewModel();
+		gunsModel.GunList = _context.Gun.ToList()
+			.OrderBy(g => g.Id)
+			.Skip((currentPageIndex - 1) * _rowsPerPage)
+			.Take(_rowsPerPage)
+			.ToList();
 
-    //// POST: Guns/Create
-    //// To protect from overposting attacks, enable the specific properties you want to bind to.
-    //// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    //[HttpPost]
-    //[ValidateAntiForgeryToken]
-    //public async Task<IActionResult> Create([Bind("Id,Description,IsDone")] Gun Gun)
-    //{
-    //    if (ModelState.IsValid)
-    //    {
-    //        _context.Add(Gun);
-    //        await _context.SaveChangesAsync();
-    //        return RedirectToAction(nameof(Index));
-    //    }
-    //    return View(Gun);
-    //}
+		double pageCount = (double)((decimal)_context.Gun.Count() / Convert.ToDecimal(_rowsPerPage));
+		gunsModel.PageCount = (int)Math.Ceiling(pageCount);
+		gunsModel.CurrentPageIndex = currentPageIndex;
 
-    //// GET: Guns/Edit/5
-    //public async Task<IActionResult> Edit(int? id)
-    //{
-    //    if (id == null)
-    //    {
-    //        return NotFound();
-    //    }
+		return gunsModel;
+	}
 
-    //    var Gun = await _context.Gun.FindAsync(id);
-    //    if (Gun == null)
-    //    {
-    //        return NotFound();
-    //    }
-    //    return View(Gun);
-    //}
+	// GET: Guns/Details/5
+	public async Task<IActionResult> Details(int? id)
+	{
+		if (id == null)
+		{
+			return NotFound();
+		}
 
-    //// POST: Guns/Edit/5
-    //// To protect from overposting attacks, enable the specific properties you want to bind to.
-    //// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    //[HttpPost]
-    //[ValidateAntiForgeryToken]
-    //public async Task<IActionResult> Edit(int id, [Bind("Id,Description,IsDone")] Gun Gun)
-    //{
-    //    if (id != Gun.Id)
-    //    {
-    //        return NotFound();
-    //    }
+		var Gun = await _context.Gun
+			.FirstOrDefaultAsync(m => m.Id == id);
+		if (Gun == null)
+		{
+			return NotFound();
+		}
 
-    //    if (ModelState.IsValid)
-    //    {
-    //        try
-    //        {
-    //            _context.Update(Gun);
-    //            await _context.SaveChangesAsync();
-    //        }
-    //        catch (DbUpdateConcurrencyException)
-    //        {
-    //            if (!GunExists(Gun.Id))
-    //            {
-    //                return NotFound();
-    //            }
-    //            else
-    //            {
-    //                throw;
-    //            }
-    //        }
-    //        return RedirectToAction(nameof(Index));
-    //    }
-    //    return View(Gun);
-    //}
+		return View(Gun);
+	}
 
-    //// GET: Guns/Delete/5
-    //public async Task<IActionResult> Delete(int? id)
-    //{
-    //    if (id == null)
-    //    {
-    //        return NotFound();
-    //    }
+	// GET: Guns/Create
+	public IActionResult Create()
+	{
+		return View();
+	}
 
-    //    var Gun = await _context.Gun
-    //        .FirstOrDefaultAsync(m => m.Id == id);
-    //    if (Gun == null)
-    //    {
-    //        return NotFound();
-    //    }
+	// POST: Guns/Create
+	// To protect from overposting attacks, enable the specific properties you want to bind to.
+	// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> Create([Bind("Id,Name,Cartridge")] Gun Gun)
+	{
+		if (ModelState.IsValid)
+		{
+			_context.Add(Gun);
+			await _context.SaveChangesAsync();
+			return RedirectToAction(nameof(Index));
+		}
+		return View(Gun);
+	}
 
-    //    return View(Gun);
-    //}
+	// GET: Guns/Edit/5
+	public async Task<IActionResult> Edit(int? id)
+	{
+		if (id == null)
+		{
+			return NotFound();
+		}
 
-    //// POST: Guns/Delete/5
-    //[HttpPost, ActionName("Delete")]
-    //[ValidateAntiForgeryToken]
-    //public async Task<IActionResult> DeleteConfirmed(int id)
-    //{
-    //    var Gun = await _context.Gun.FindAsync(id);
-    //    _context.Gun.Remove(Gun);
-    //    await _context.SaveChangesAsync();
-    //    return RedirectToAction(nameof(Index));
-    //}
+		var Gun = await _context.Gun.FindAsync(id);
+		if (Gun == null)
+		{
+			return NotFound();
+		}
+		return View(Gun);
+	}
 
-    private bool GunExists(int id)
-    {
-        return _context.Gun.Any(e => e.Id == id);
-    }
+	// POST: Guns/Edit/5
+	// To protect from overposting attacks, enable the specific properties you want to bind to.
+	// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Cartridge")] Gun Gun)
+	{
+		if (id != Gun.Id)
+		{
+			return NotFound();
+		}
+
+		if (ModelState.IsValid)
+		{
+			try
+			{
+				_context.Update(Gun);
+				await _context.SaveChangesAsync();
+			}
+			catch (DbUpdateConcurrencyException)
+			{
+				if (!GunExists(Gun.Id))
+				{
+					return NotFound();
+				}
+				else
+				{
+					throw;
+				}
+			}
+			return RedirectToAction(nameof(Index));
+		}
+		return View(Gun);
+	}
+
+	// GET: Guns/Delete/5
+	public async Task<IActionResult> Delete(int? id)
+	{
+		if (id == null)
+		{
+			return NotFound();
+		}
+
+		var Gun = await _context.Gun
+			.FirstOrDefaultAsync(m => m.Id == id);
+		if (Gun == null)
+		{
+			return NotFound();
+		}
+
+		return View(Gun);
+	}
+
+	// POST: Guns/Delete/5
+	[HttpPost, ActionName("Delete")]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> DeleteConfirmed(int id)
+	{
+		var Gun = await _context.Gun.FindAsync(id);
+		_context.Gun.Remove(Gun);
+		await _context.SaveChangesAsync();
+		return RedirectToAction(nameof(Index));
+	}
+
+	private bool GunExists(int id)
+	{
+		return _context.Gun.Any(e => e.Id == id);
+	}
 }

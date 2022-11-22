@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using GunsPaginationMVC.Entities;
-using Newtonsoft.Json.Linq;
-using Microsoft.EntityFrameworkCore.SqlServer;
+﻿using GunsPaginationMVC.Entities;
 
 namespace GunsPaginationMVC.Data
 {

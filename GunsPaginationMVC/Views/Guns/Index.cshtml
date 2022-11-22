@@ -1,41 +1,84 @@
-﻿@model IEnumerable<GunsPaginationMVC.Entities.Gun>
+﻿@model GunsPaginationMVC.Models.GunsViewModel
 
 @{
-    ViewData["Title"] = "Index";
+	ViewData["Title"] = "Index";
 }
 
 <h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Cartridge)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Cartridge)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+<form asp-action="Index" asp-controller="Guns" method="post">
+
+	<table class="table">
+		<thead>
+			<tr>
+				<th>
+					Name
+				</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in Model.GunList)
+			{
+				<tr>
+					<td>
+						@Html.DisplayFor(modelItem => item.Name)
+					</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@item.Id">Details</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+	<ul class="pagination">
+		@for (int i = 1; i <= Model.PageCount; i++)
+		{
+			<li class="page-item">
+				@if (i != Model.CurrentPageIndex)
+				{
+					<a class="page-link" href="javascript:PagerClick(@i);">@i</a>
+				}
+				else
+				{
+					<a class="page-link">@i</a>
+				}
+			</li>
+
+		}
+	</ul>
+	<input type="hidden" id="hfCurrentPageIndex" name="currentPageIndex" />
+</form>
+
+@using (Html.BeginForm("Filter", "Index", FormMethod.Post))
+{
+    @Html.TextBoxFor(model => model.Filter)
+    @Html.ValidationMessageFor(model => model.Filter)
+    <button type="submit">Search</button>
 }
-    </tbody>
-</table>
+<form asp-action="Filter" asp-controller="Guns" method="post">
+	@*<p>
+	@Html.ActionLink("Filtering","Index","Guns","filter","post")
+	</p>*@
+	@*<p> Filter for cartridges: @Html.TextBox("Cartridge")</p>*@
+	<input type="text" name="filter" id="txtFilter" value="9">
+	@*<p>	<input id="filter" type="button" value="Search" /></p>*@
+	@*<input type="hidden" id="hfFilter" name="filter" />*@
+	<input id="clickMe" type="button" value="Search" onclick="FilterClick(document.getElementById(" txtFilter"));" />
+</form>
+<script type="text/javascript">
+	function PagerClick(index) {
+		document.getElementById("hfCurrentPageIndex").value = index;
+		document.forms[0].submit();
+	}
+</script>
+<script type="text/javascript">
+	function FilterClick(filter) {
+		var filter = document.getElementsByName('Cartridge')[0].value;
+		//document.getElementById("hfCurrentPageIndex").value = 1;
+		document.getElementById("hfFilter").value = filter;
+		document.forms[0].submit();
+	}
+</script>
+
