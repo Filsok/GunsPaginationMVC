@@ -22,9 +22,9 @@ public class GunsController : Controller
 	}
 
 	[HttpPost]
-	public async Task<IActionResult> Index(int currentPageIndex)
+	public async Task<IActionResult> Index(int currentPageIndex, double filter)
 	{
-		return View(await GetGunList(currentPageIndex));
+		return View(await GetGunListFiltered(currentPageIndex, filter));
 	}
 
 	[HttpPost]
@@ -36,14 +36,15 @@ public class GunsController : Controller
 	public async Task<GunsViewModel> GetGunListFiltered(int currentPageIndex, double filter)
 	{
 		var gunsModel = new GunsViewModel();
-		gunsModel.GunList = _context.Gun.ToList()
-			.Where(g => g.Cartridge == filter)
+		var filteredList = _context.Gun.ToList()
+			.Where(g => ((decimal)filter) == 0 ? g.Id >= 0 : g.Cartridge == filter);
+		gunsModel.GunList = filteredList
 			.OrderBy(g => g.Id)
 			.Skip((currentPageIndex - 1) * _rowsPerPage)
 			.Take(_rowsPerPage)
 			.ToList();
 
-		double pageCount = (double)((decimal)_context.Gun.Count() / Convert.ToDecimal(_rowsPerPage));
+		double pageCount = (double)((decimal)filteredList.Count() / Convert.ToDecimal(_rowsPerPage));
 		gunsModel.PageCount = (int)Math.Ceiling(pageCount);
 		gunsModel.CurrentPageIndex = currentPageIndex;
 

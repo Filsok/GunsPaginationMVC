@@ -51,22 +51,13 @@
 	<input type="hidden" id="hfCurrentPageIndex" name="currentPageIndex" />
 </form>
 
-@using (Html.BeginForm("Filter", "Index", FormMethod.Post))
+@using (Html.BeginForm(FormMethod.Post))
 {
     @Html.TextBoxFor(model => model.Filter)
     @Html.ValidationMessageFor(model => model.Filter)
     <button type="submit">Search</button>
 }
-<form asp-action="Filter" asp-controller="Guns" method="post">
-	@*<p>
-	@Html.ActionLink("Filtering","Index","Guns","filter","post")
-	</p>*@
-	@*<p> Filter for cartridges: @Html.TextBox("Cartridge")</p>*@
-	<input type="text" name="filter" id="txtFilter" value="9">
-	@*<p>	<input id="filter" type="button" value="Search" /></p>*@
-	@*<input type="hidden" id="hfFilter" name="filter" />*@
-	<input id="clickMe" type="button" value="Search" onclick="FilterClick(document.getElementById(" txtFilter"));" />
-</form>
+
 <script type="text/javascript">
 	function PagerClick(index) {
 		document.getElementById("hfCurrentPageIndex").value = index;
